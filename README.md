@@ -3,7 +3,7 @@
 Compares different sequential and concurrent programming methods to fill an array with sequential integral values. No optimizations applied. Compares the following algorithms:
 
 Sequential algorithms
-###Basic for loop:
+### Basic for loop:
 ```C++
 for (unsigned i = 0; i < size; i++)
     arr[i] = i;
@@ -14,7 +14,7 @@ STL std::generate:
   std::generate(arr, arr + size, [i = 0]() mutable { return i++; });
 ```
 
-###Parallel algorithms
+### Parallel algorithms
 PPL parallel_for loop:
 ```C++
   Concurrency::parallel_for<std::size_t>(std::size_t(0), std::size_t(size), [&arr](unsigned i) { arr[i] = i; }, concurrency::static_partitioner());
@@ -62,7 +62,7 @@ OMP version.
     arr[i] = i;
 ```
 
-###Results on my Intel Core i3 5005U 2.00GHz w/Intel HD 5500 GPU:
+### Results on my Intel Core i3 5005U 2.00GHz w/Intel HD 5500 GPU:
 ```text
   Number of processors: 4, number of iterations: 50
   sequential for loop    : 0.00516838
