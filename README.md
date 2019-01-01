@@ -2,6 +2,67 @@
 
 Compares different sequential and concurrent programming methods to fill an array with sequential integral values. No optimizations applied.
 
+Sequential algorithms
+Basic for loop:
+```C++
+for (unsigned i = 0; i < size; i++)
+    arr[i] = i;
+```
+
+STL std::generate:
+```C++
+  std::generate(arr, arr + size, [i = 0]() mutable { return i++; });
+```
+
+Parallel algorithms
+PPL parallel_for loop:
+```C++
+  Concurrency::parallel_for<std::size_t>(std::size_t(0), std::size_t(size), [&arr](unsigned i) { arr[i] = i; }, concurrency::static_partitioner());
+```
+
+PPL parallel_invoke with 4 threads:
+```C++
+Concurrency::parallel_invoke(
+    [&] { tFill(0u, size / NUM_THREADS, arr); },
+    [&] { tFill(size / NUM_THREADS, size / NUM_THREADS, arr); },
+    [&] { tFill(2 * size / NUM_THREADS, size / NUM_THREADS, arr); },
+    [&] { tFill(3 * size / NUM_THREADS, size / NUM_THREADS, arr); }
+  );
+```
+
+C++17 parallel for_each loop:
+```C++
+  std::for_each(std::execution::par_unseq, arr, arr + size, [arr](auto& a) { a = &a - &arr[0]; });
+```
+
+C++ AMP version:
+```C++
+  array<unsigned, 1> av(size, arr);
+  parallel_for_each(av.extent, [&av](concurrency::index<1> i) restrict(amp) { av[i] = i[0]; });
+  concurrency::copy(av, arr);
+}
+```
+
+Concurrent thread version:
+```C++
+void tFill(const unsigned from, const unsigned size, unsigned* arr) {
+  for (unsigned i = from; i < from + size; i++) arr[i] = i;
+}
+
+  for (unsigned i = 0; i < numThreads; i++)
+    threads.push_back(std::thread(tFill, (i * size) / numThreads, size / numThreads, std::ref(arr)));
+  for (auto& th : threads)
+    th.join();
+```
+
+OMP version.
+```C++
+#pragma omp parallel for
+  for (int i = 0; i < static_cast<int>(size); i++)
+    arr[i] = i;
+```
+
+
 ```text
 Results on my Intel Core i3 5005U 2.00GHz w/Intel HD 5500 GPU:
   Number of processors: 4, number of iterations: 50
