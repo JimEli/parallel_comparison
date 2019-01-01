@@ -2,8 +2,8 @@
 
 Compares different sequential and concurrent programming methods to fill an array with sequential integral values. No optimizations applied. Compares the following algorithms:
 
-Sequential algorithms
-### Basic for loop:
+### Sequential algorithms
+Basic for loop:
 ```C++
 for (unsigned i = 0; i < size; i++)
     arr[i] = i;
