@@ -2,7 +2,7 @@
 
 Compares different sequential and concurrent programming methods to fill an array with sequential integral values. No optimizations applied. Compares the following algorithms:
 
-### Sequential algorithms
+### Sequential Algorithms
 Basic for loop:
 ```C++
 for (unsigned i = 0; i < size; i++)
@@ -14,7 +14,7 @@ STL std::generate:
   std::generate(arr, arr + size, [i = 0]() mutable { return i++; });
 ```
 
-### Parallel algorithms
+### Parallel Algorithms
 PPL parallel_for loop:
 ```C++
   Concurrency::parallel_for<std::size_t>(std::size_t(0), std::size_t(size), [&arr](unsigned i) { arr[i] = i; }, concurrency::static_partitioner());
