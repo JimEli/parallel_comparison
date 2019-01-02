@@ -25,10 +25,12 @@
 *************************************************************************
 * Change Log:
 *   12/31/2018: Initial release. JME
+*   01/02/2018: Added try/catch for bad_alloc exception. JME
 *************************************************************************/
 
 #include <iostream>  
 #include <memory>    
+#include <exception>
 #include <algorithm> 
 #include <numeric>
 #include <ppl.h>
@@ -38,19 +40,20 @@
 #include <vector>
 #include <omp.h>
 
+// Benchmarking constants.
 constexpr unsigned MAX_TESTS{ 8 };
 constexpr unsigned NUM_ITERATIONS{ 50 };
 constexpr unsigned ARRAY_SIZE{ 10'000'000 };
 constexpr unsigned NUM_THREADS{ 4 };
 
-// Thread slice for array filling.
+// Thread slice for array filling used by thread & parallel_invoke.
 void tFill(const unsigned from, const unsigned size, unsigned* arr)
 {
 	for (unsigned i = from; i < from + size; i++)
 		arr[i] = i;
 }
 
-// Sequential for loop.
+// Basic sequential for loop.
 void seq(unsigned* arr, unsigned size)
 {
 	for (unsigned i = 0; i < size; i++)
@@ -69,7 +72,7 @@ void ppf(unsigned* arr, unsigned size)
 	Concurrency::parallel_for<std::size_t>(std::size_t(0), std::size_t(size), [&arr](unsigned i) { arr[i] = i; }, concurrency::static_partitioner());
 }
 
-// PPL parallel_invoke with 4 threads.
+// PPL parallel_invoke using 4 threads.
 void ppi(unsigned* arr, unsigned size)
 {
 	Concurrency::parallel_invoke(
@@ -145,7 +148,6 @@ int main()
 {
 	// Report number of processors.
 	std::cout << "Number of processors: " << omp_get_num_procs() << ", number of iterations: " << NUM_ITERATIONS << std::endl;
-	//std::cout << "Num procs: " << std::thread::hardware_concurrency() << std::endl;
 	
 	// Benchmark loop.
 	for (int numTests = 0; numTests < MAX_TESTS; numTests++)
@@ -155,20 +157,28 @@ int main()
 
 		for (int i=0; i<NUM_ITERATIONS; i++)
 		{
-			std::unique_ptr<unsigned[]> a = std::make_unique<unsigned[]>(ARRAY_SIZE);
-
-			// Start timer.
-			double start = omp_get_wtime();
-
-			pFill[numTests](a.get(), ARRAY_SIZE);
-
-			// End timer.
-			t += (omp_get_wtime() - start);
-
-			// Assert correct results.
-			if (!std::is_sorted(a.get(), a.get() + ARRAY_SIZE) || a[0] != 0 || a[ARRAY_SIZE - 1] != ARRAY_SIZE - 1)
+			try
 			{
-				std::cout << fillMethodDescription[numTests] << " failed!\n";
+				std::unique_ptr<unsigned[]> a = std::make_unique<unsigned[]>(ARRAY_SIZE);
+				
+				// Start timer.
+				double start = omp_get_wtime();
+
+				pFill[numTests](a.get(), ARRAY_SIZE);
+
+				// End timer.
+				t += (omp_get_wtime() - start);
+
+				// Assert correct results.
+				if (!std::is_sorted(a.get(), a.get() + ARRAY_SIZE) || a[0] != 0 || a[ARRAY_SIZE - 1] != ARRAY_SIZE - 1)
+				{
+					std::cout << fillMethodDescription[numTests] << " failed!\n";
+					exit(-1);
+				}
+			} 
+			catch (const std::exception& ex)
+			{
+				std::cout << "Exception failure: " << ex.what() << std::endl;
 				exit(-1);
 			}
 		}
