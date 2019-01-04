@@ -125,10 +125,8 @@ void thd(unsigned* arr, unsigned size)
 // TBB parallel_for loop.
 void itb(unsigned* arr, unsigned size)
 {
-	tbb::task_scheduler_init init;  // Automatic number of threads
+	tbb::task_scheduler_init init;       // Automatic number of threads
 	//tbb::task_scheduler_init init(4);  // Explicit number of threads
-
-	//tbb::parallel_for(tbb::blocked_range<unsigned>(0, n), fillArray(a), tbb::auto_partitioner());
 	tbb::parallel_for(tbb::blocked_range<unsigned>(0, size),
 		[=](const tbb::blocked_range<unsigned>& r) {
 			for (unsigned i = r.begin(); i != r.end(); ++i)
