@@ -8,24 +8,25 @@
 * an array with sequential integral values. No optimizations applied.
 *
 * Results on my Intel Core i3 5005U 2.00GHz w/Intel HD 5500 GPU:
-*   Number of processors: 4, number of iterations: 50
-*   sequential for loop    : 0.00516838
-*   std::generate          : 0.00847837
-*   ppl parallel_for       : 0.0130731
-*   ppl parallel_invoke    : 0.00465069
-*   c++17 parallel for_each: 0.00470779
-*   c++ AMP                : 0.0268972
-*   threads                : 0.00527882
-*   openMP                 : 0.0059868
+*  Number of processors: 4, number of iterations: 50
+*  sequential for loop    : 0.00553748
+*  std::generate          : 0.00919595
+*  ppl parallel_for       : 0.0136484
+*  ppl parallel_invoke    : 0.00466764
+*  c++17 parallel for_each: 0.004742
+*  c++ AMP                : 0.0268908
+*  threads                : 0.00539937
+*  openMP                 : 0.00623423
+*  tbb                    : 0.00572005
 *
 * Notes:
-*  (1) Compiled/tested with MS Visual Studio 2017 Community (v141), and
+*  (1) Compile release x64 version for best results.
+*  (2) Compiled/tested with MS Visual Studio 2017 Community (v141), and
 *      Windows SDK version 10.0.17134.0 (32 & 64-bit). Using the following
 *      options: /openmp /std:c++17, Conformance mode: No
 *************************************************************************
 * Change Log:
 *   12/31/2018: Initial release. JME
-*   01/02/2018: Added try/catch for bad_alloc exception. JME
 *************************************************************************/
 
 #include <iostream>  
@@ -39,21 +40,22 @@
 #include <thread>
 #include <vector>
 #include <omp.h>
+#include "tbb\parallel_for.h"
+#include "tbb\task_scheduler_init.h"
 
-// Benchmarking constants.
-constexpr unsigned MAX_TESTS{ 8 };
+constexpr unsigned MAX_TESTS{ 9 };
 constexpr unsigned NUM_ITERATIONS{ 50 };
 constexpr unsigned ARRAY_SIZE{ 10'000'000 };
 constexpr unsigned NUM_THREADS{ 4 };
 
-// Thread slice for array filling used by thread & parallel_invoke.
+// Thread slice for array filling.
 void tFill(const unsigned from, const unsigned size, unsigned* arr)
 {
 	for (unsigned i = from; i < from + size; i++)
 		arr[i] = i;
 }
 
-// Basic sequential for loop.
+// Sequential for loop.
 void seq(unsigned* arr, unsigned size)
 {
 	for (unsigned i = 0; i < size; i++)
@@ -72,7 +74,7 @@ void ppf(unsigned* arr, unsigned size)
 	Concurrency::parallel_for<std::size_t>(std::size_t(0), std::size_t(size), [&arr](unsigned i) { arr[i] = i; }, concurrency::static_partitioner());
 }
 
-// PPL parallel_invoke using 4 threads.
+// PPL parallel_invoke with 4 threads.
 void ppi(unsigned* arr, unsigned size)
 {
 	Concurrency::parallel_invoke(
@@ -120,6 +122,22 @@ void thd(unsigned* arr, unsigned size)
 		th.join();
 }
 
+// TBB parallel_for loop.
+void itb(unsigned* arr, unsigned size)
+{
+	tbb::task_scheduler_init init;  // Automatic number of threads
+	//tbb::task_scheduler_init init(4);  // Explicit number of threads
+
+	//tbb::parallel_for(tbb::blocked_range<unsigned>(0, n), fillArray(a), tbb::auto_partitioner());
+	tbb::parallel_for(tbb::blocked_range<unsigned>(0, size),
+		[=](const tbb::blocked_range<unsigned>& r) {
+			for (unsigned i = r.begin(); i != r.end(); ++i)
+				arr[i] = i;
+		}, 
+		tbb::auto_partitioner()
+	);
+}
+
 // OMP version.
 void opn(unsigned* arr, unsigned size)
 {
@@ -138,11 +156,12 @@ std::string fillMethodDescription[] =
 	"c++17 parallel for_each",
 	"c++ AMP                ",
 	"threads                ",
-	"openMP                 "
+	"openMP                 ",
+	"tbb                    "
 };
 
 // Array of function pointers.
-void(*pFill[])(unsigned*, unsigned) = { seq, gen, ppf, ppi, cpp, amp, thd, opn };
+void(*pFill[])(unsigned*, unsigned) = { seq, gen, ppf, ppi, cpp, amp, thd, opn, itb };
 
 int main()
 {
