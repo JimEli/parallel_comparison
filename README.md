@@ -65,8 +65,6 @@ OMP version.
 TBB version.
 ```C++
 	tbb::task_scheduler_init init;  // Automatic number of threads
-
-	//tbb::parallel_for(tbb::blocked_range<unsigned>(0, n), fillArray(a), tbb::auto_partitioner());
 	tbb::parallel_for(tbb::blocked_range<unsigned>(0, size),
 		[=](const tbb::blocked_range<unsigned>& r) {
 			for (unsigned i=r.begin(); i!=r.end(); ++i)
