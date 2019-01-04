@@ -62,17 +62,31 @@ OMP version.
     arr[i] = i;
 ```
 
+TBB version.
+```C++
+	tbb::task_scheduler_init init;  // Automatic number of threads
+
+	//tbb::parallel_for(tbb::blocked_range<unsigned>(0, n), fillArray(a), tbb::auto_partitioner());
+	tbb::parallel_for(tbb::blocked_range<unsigned>(0, size),
+		[=](const tbb::blocked_range<unsigned>& r) {
+			for (unsigned i=r.begin(); i!=r.end(); ++i)
+				arr[i] = i;
+		}, tbb::auto_partitioner()
+    );
+```
+
 ### Results on my Intel Core i3 5005U 2.00GHz w/Intel HD 5500 GPU:
 ```text
   Number of processors: 4, number of iterations: 50
-  sequential for loop    : 0.00516838
-  std::generate          : 0.00847837
-  ppl parallel_for       : 0.0130731
-  ppl parallel_invoke    : 0.00465069
-  c++17 parallel for_each: 0.00470779
-  c++ AMP                : 0.0268972
-  threads                : 0.00527882
-  openMP                 : 0.0059868
+  sequential for loop    : 0.00553748
+  std::generate          : 0.00919595
+  ppl parallel_for       : 0.0136484
+  ppl parallel_invoke    : 0.00466764
+  c++17 parallel for_each: 0.004742
+  c++ AMP                : 0.0268908
+  threads                : 0.00539937
+  openMP                 : 0.00623423
+  tbb                    : 0.00572005
 ```
 
 Notes:
