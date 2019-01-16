@@ -1,6 +1,8 @@
 # Simple C++ Concurrent and Parallel API Comparison
 
-Compares different sequential and concurrent programming methods to fill an array with sequential integral values. Utilizes threads, C++ PPL, C++ AMP, C++17 Parallel, TBB and OpenMP libraries. No optimizations applied. Compares the following algorithms:
+This program compares several different sequential and concurrent programming methods to fill an array with sequential integral values. Utilizes threads, C++ PPL, C++ AMP, C++17 Parallel, TBB and OpenMP libraries. Utilizes a simple timing benchmarch. No specific optimizations applied. 
+
+Compares the following algorithms:
 
 ### Sequential Algorithms
 Basic for loop:
