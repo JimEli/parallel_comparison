@@ -5,24 +5,24 @@ This program compares several different sequential and concurrent programming me
 Compares the following algorithms:
 
 ### Sequential Algorithms
-Basic for loop:
+Basic *for* loop:
 ```C++
 for (unsigned i = 0; i < size; i++)
     arr[i] = i;
 ```
 
-STL std::generate:
+C++ Standard Template Library *std::generate* function:
 ```C++
   std::generate(arr, arr + size, [i = 0]() mutable { return i++; });
 ```
 
 ### Parallel Algorithms
-PPL parallel_for loop:
+Microsoft Parallel Patterns Library *parallel_for* loop:
 ```C++
   Concurrency::parallel_for<std::size_t>(std::size_t(0), std::size_t(size), [&arr](unsigned i) { arr[i] = i; }, concurrency::static_partitioner());
 ```
 
-PPL parallel_invoke with 4 threads:
+PPL *parallel_invoke* function with 4 threads:
 ```C++
 Concurrency::parallel_invoke(
     [&] { tFill(0u, size / NUM_THREADS, arr); },
@@ -32,7 +32,7 @@ Concurrency::parallel_invoke(
   );
 ```
 
-C++17 parallel for_each loop:
+C++17 parallel extensions *for_each* loop:
 ```C++
   std::for_each(std::execution::par_unseq, arr, arr + size, [arr](auto& a) { a = &a - &arr[0]; });
 ```
@@ -57,14 +57,14 @@ void tFill(const unsigned from, const unsigned size, unsigned* arr) {
     th.join();
 ```
 
-OMP version.
+OpenMP version.
 ```C++
 #pragma omp parallel for
   for (int i = 0; i < static_cast<int>(size); i++)
     arr[i] = i;
 ```
 
-TBB version.
+Intel Thread Building Blocks (TBB) version.
 ```C++
 	tbb::task_scheduler_init init;  // Automatic number of threads
 	tbb::parallel_for(tbb::blocked_range<unsigned>(0, size),
@@ -75,7 +75,8 @@ TBB version.
     );
 ```
 
-### Results on my Intel Core i3 5005U 2.00GHz w/Intel HD 5500 GPU:
+### Smaple Results
+Captured on my Intel Core i3 5005U 2.00GHz w/Intel HD 5500 GPU (2 core/4 thread laptop computer):
 ```text
   Number of processors: 4, number of iterations: 50
   sequential for loop    : 0.00553748
